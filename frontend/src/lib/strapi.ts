@@ -59,3 +59,26 @@ export async function getArticleBySlug(slug: string): Promise<StrapiSingleArticl
     return null;
   }
 }
+export async function getAllArticleSlugs(): Promise<{ slug: string }[]> {
+  const apiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+  if (!apiUrl) { return []; }
+
+  const url = new URL("/api/articles", apiUrl);
+  url.searchParams.set("fields[0]", "slug");
+  url.searchParams.set("pagination[pageSize]", "100"); // Adjust if you have more articles
+
+  try {
+    const response = await fetch(url.toString(), { cache: "no-cache" });
+    if (!response.ok) { return []; }
+    
+    const data = await response.json();
+    if (data.data && Array.isArray(data.data)) {
+      // We map over the flat data structure that your API provides
+      return data.data.map((item: { slug: string }) => ({ slug: item.slug }));
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching article slugs:", error);
+    return [];
+  }
+}

@@ -1,10 +1,23 @@
-import { getArticleBySlug } from "@/lib/strapi";
+import { getArticleBySlug, getAllArticleSlugs } from "@/lib/strapi";
 import { notFound } from "next/navigation";
 
-// This is the final version.
-// We use @ts-expect-error as requested by the strict linter.
+// This function tells Next.js which pages to pre-build.
+// It is a best practice and solves the build-time type error.
+export async function generateStaticParams() {
+  const articles = await getAllArticleSlugs();
+
+  // Ensure we have a valid array before mapping
+  if (!articles || !Array.isArray(articles)) {
+    return [];
+  }
+
+  return articles.map((article) => ({
+    slug: article.slug,
+  }));
+}
+
+// This is the final, robust component definition.
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  // @ts-expect-error - This is necessary to bypass a known issue with Amplify's build environment type checking.
   const article = await getArticleBySlug(params.slug);
 
   if (!article) {
