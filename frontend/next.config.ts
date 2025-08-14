@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    fontLoaders: [
-      { loader: '@next/font/google', options: { subsets: ['latin'] } },
-    ],
-  },
+  // This is the stable and recommended way to handle font issues in build environments.
+  optimizeFonts: false,
 };
 
 module.exports = nextConfig;
