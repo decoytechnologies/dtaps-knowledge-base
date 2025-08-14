@@ -2,9 +2,9 @@ import { getArticleBySlug } from "@/lib/strapi";
 import { notFound } from "next/navigation";
 
 // This is the final version.
-// The @ts-ignore comment tells the strict build server to bypass the false error.
+// We use @ts-expect-error as requested by the strict linter.
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
-  // @ts-ignore - This is necessary to bypass a known issue with Amplify's build environment type checking.
+  // @ts-expect-error - This is necessary to bypass a known issue with Amplify's build environment type checking.
   const article = await getArticleBySlug(params.slug);
 
   if (!article) {
