@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "admin",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,16 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tiptap/extension-color": "^3.2.0",
+    "@tiptap/extension-font-size": "^3.0.0-next.3",
+    "@tiptap/extension-highlight": "^3.2.0",
+    "@tiptap/extension-image": "^3.2.0",
+    "@tiptap/extension-text-align": "^3.2.0",
+    "@tiptap/extension-text-style": "^3.2.0",
+    "@tiptap/extension-youtube": "^3.2.0",
+    "@tiptap/pm": "^3.2.0",
+    "@tiptap/react": "^3.2.0",
+    "@tiptap/starter-kit": "^3.2.0",
     "lucide-react": "^0.539.0",
     "next": "15.4.6",
-    "next-themes": "^0.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

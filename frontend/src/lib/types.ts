@@ -1,6 +1,4 @@
-// This file defines the shape of the data we expect from Strapi.
-
-export interface StrapiArticle {
+export interface ArticleLink {
   id: number;
   title: string;
   slug: string;
@@ -10,28 +8,26 @@ export interface Module {
   id: number;
   name: string;
   description: string;
-  articles: StrapiArticle[];
+  articles: ArticleLink[];
 }
 
-export interface StrapiModuleResponse {
+export interface ApiResponse {
   data: Module[];
-  meta: {
-    pagination: {
-      page: number;
-      pageSize: number;
-      pageCount: number;
-      total: number;
-    };
-  };
 }
 
-// FIX: This type is now flat, with no 'attributes' property.
-export interface StrapiSingleArticle {
+export interface SingleArticle {
   id: number;
   title: string;
   slug: string;
   content: string;
   createdAt: string;
   updatedAt: string;
-  publishedAt: string;
+  published: boolean;
+  author: string | null;
+  seoTitle: string | null;
+  metaDescription: string | null;
+  module: {
+    id: number;
+    name: string;
+  };
 }
