@@ -9,6 +9,7 @@ export interface Module {
   name: string;
   description: string;
   articles: ArticleLink[];
+  children: Module[]; // This new property will hold the sub-modules
 }
 
 export interface ApiResponse {

@@ -3,34 +3,26 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import ModuleForm from '@/components/ModuleForm';
-import ModuleList from '@/components/ModuleList';
+import ModuleList, { NestedModule } from '@/components/ModuleList';
 import EditModuleModal from '@/components/EditModuleModal';
 import ManageArticles from '@/components/ManageArticles';
 import { FilePlus, PenSquare, LayoutList, BookOpen } from 'lucide-react';
+import { Toaster } from 'react-hot-toast';
 
-const ArticleForm = dynamic(() => import('@/components/ArticleForm'), { 
+const ArticleForm = dynamic(() => import('@/components/ArticleForm'), {
   ssr: false,
-  loading: () => <p className="p-8 text-center text-gray-500">Loading Editor...</p> 
+  loading: () => <p className="p-8 text-center text-gray-500">Loading Editor...</p>
 });
-
-// Define types for our data
-interface Module {
-  id: number;
-  name: string;
-  description: string | null;
-}
 
 interface Article {
   id: number;
   title: string;
   published: boolean;
   updatedAt: string;
-  module: {
-    name: string;
-  };
+  module: { name: string; };
 }
 
-// Sidebar component with all navigation tabs
+// Sidebar component with full styling restored
 const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) => (
   <aside className="w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0">
     <div className="h-16 flex items-center px-6">
@@ -60,10 +52,10 @@ const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string, setActiveTab:
 );
 
 export default function CreatorDashboard() {
-  const [modules, setModules] = useState<Module[]>([]);
+  const [modules, setModules] = useState<NestedModule[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
-  const [activeTab, setActiveTab] = useState('manage-articles');
-  const [editingModule, setEditingModule] = useState<Module | null>(null);
+  const [activeTab, setActiveTab] = useState('manage-modules');
+  const [editingModule, setEditingModule] = useState<NestedModule | null>(null);
   const [editingArticleId, setEditingArticleId] = useState<number | null>(null);
 
   const fetchAllData = useCallback(async () => {
@@ -72,7 +64,6 @@ export default function CreatorDashboard() {
         fetch('http://localhost:8080/api/admin/modules'),
         fetch('http://localhost:8080/api/admin/articles')
       ]);
-      if (!modulesRes.ok || !articlesRes.ok) throw new Error("Failed to fetch data");
       const modulesData = await modulesRes.json();
       const articlesData = await articlesRes.json();
       setModules(modulesData);
@@ -86,8 +77,28 @@ export default function CreatorDashboard() {
     fetchAllData();
   }, [fetchAllData]);
 
-  const handleEditModule = (module: Module) => setEditingModule(module);
+  const handleReorderModules = async (reorderedModules: NestedModule[]) => {
+    setModules(reorderedModules);
+    const payload = reorderedModules.map((mod, index) => ({
+      id: mod.id,
+      order: index,
+      parentId: null,
+    }));
+    try {
+      await fetch('http://localhost:8080/api/modules/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedModules: payload }),
+      });
+    } catch (error) {
+      console.error("Failed to save new order", error);
+      alert("Failed to save new order.");
+      fetchAllData();
+    }
+  };
 
+  const handleEditModule = (module: NestedModule) => setEditingModule(module);
+  
   const handleDeleteModule = async (id: number) => {
     if (confirm('Are you sure you want to delete this module? This cannot be undone.')) {
       try {
@@ -123,14 +134,11 @@ export default function CreatorDashboard() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'new-module':
-        return <ModuleForm onModuleCreated={fetchAllData} />;
-      case 'new-article':
-        return <ArticleForm modules={modules} articleIdToEdit={null} onFormSubmit={handleFormSubmit} />;
-      case 'edit-article':
-        return <ArticleForm modules={modules} articleIdToEdit={editingArticleId} onFormSubmit={handleFormSubmit} />;
+      case 'new-module': return <ModuleForm modules={modules} onModuleCreated={fetchAllData} />;
+      case 'new-article': return <ArticleForm modules={modules} articleIdToEdit={null} onFormSubmit={handleFormSubmit} />;
+      case 'edit-article': return <ArticleForm modules={modules} articleIdToEdit={editingArticleId} onFormSubmit={handleFormSubmit} />;
       case 'manage-modules':
-        return <ModuleList modules={modules} onEdit={handleEditModule} onDelete={handleDeleteModule} />;
+        return <ModuleList modules={modules} setModules={handleReorderModules} onEdit={handleEditModule} onDelete={handleDeleteModule} />;
       case 'manage-articles':
       default:
         return <ManageArticles articles={articles} onEdit={handleEditArticle} onDelete={handleDeleteArticle} />;
@@ -139,6 +147,7 @@ export default function CreatorDashboard() {
 
   return (
     <div className="flex h-screen bg-white">
+      <Toaster position="bottom-right" />
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="flex-1 flex flex-col overflow-y-auto">
         <div className="flex-1 p-8 bg-gray-50">{renderContent()}</div>

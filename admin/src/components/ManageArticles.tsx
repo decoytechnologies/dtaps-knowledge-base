@@ -2,6 +2,7 @@
 
 import { Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
+// Define the shape of our article data
 interface Article {
   id: number;
   title: string;

@@ -2,12 +2,25 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import dynamic from 'next/dynamic';
+import toast from 'react-hot-toast';
 
 const EditorLoading = () => <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 text-sm text-gray-500">Loading Editor...</div>;
 const TiptapEditor = dynamic(() => import('./TiptapEditor'), { ssr: false, loading: () => <EditorLoading /> });
 
-interface Module { id: number; name: string; }
+interface Module { id: number; name: string; children?: Module[] }
 interface ArticleToEdit { id: number; title: string; content: string; moduleId: number; published: boolean; author: string | null; seoTitle: string | null; metaDescription: string | null; }
+
+// Helper function to flatten the module structure for the dropdown
+const flattenModules = (modules: Module[], level = 0) => {
+  let options: { id: number; name: string }[] = [];
+  modules.forEach(module => {
+    options.push({ id: module.id, name: `${'--'.repeat(level)} ${module.name}` });
+    if (module.children) {
+      options = options.concat(flattenModules(module.children, level + 1));
+    }
+  });
+  return options;
+};
 
 export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: { modules: Module[], articleIdToEdit: number | null, onFormSubmit: () => void }) {
   const [title, setTitle] = useState('');
@@ -18,15 +31,14 @@ export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: 
   const [seoTitle, setSeoTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   
-  const [message, setMessage] = useState('');
-  const [isError, setIsError] = useState(false);
   const isEditing = articleIdToEdit !== null;
+  const flatModules = flattenModules(modules);
 
   useEffect(() => {
     if (articleIdToEdit) {
       const fetchArticle = async () => {
         try {
-          const res = await fetch(`http://localhost:8080/api/articles/${articleIdToEdit}`);
+          const res = await fetch(`http://localhost:8080/api/admin/articles/${articleIdToEdit}`);
           if (!res.ok) throw new Error("Failed to fetch article data");
           const data: ArticleToEdit = await res.json();
           setTitle(data.title);
@@ -37,9 +49,7 @@ export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: 
           setSeoTitle(data.seoTitle || '');
           setMetaDescription(data.metaDescription || '');
         } catch (error) {
-          console.error("Failed to fetch article for editing", error);
-          setMessage('Failed to load article data.');
-          setIsError(true);
+          toast.error('Failed to load article data.');
         }
       };
       fetchArticle();
@@ -47,15 +57,14 @@ export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: 
   }, [articleIdToEdit]);
 
   useEffect(() => {
-    if (modules.length > 0 && !moduleId) {
-      setModuleId(modules[0].id.toString());
+    if (flatModules.length > 0 && !moduleId) {
+      setModuleId(flatModules[0].id.toString());
     }
-  }, [modules, moduleId]);
+  }, [flatModules, moduleId]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setMessage('');
-    setIsError(false);
+    const toastId = toast.loading(isEditing ? 'Saving changes...' : 'Creating article...');
 
     const articleData = { title, content, moduleId, published, author, seoTitle, metaDescription };
     const url = isEditing ? `http://localhost:8080/api/articles/${articleIdToEdit}` : 'http://localhost:8080/api/articles';
@@ -70,14 +79,13 @@ export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: 
 
       if (!response.ok) throw new Error(isEditing ? 'Failed to update article' : 'Failed to create article');
       
-      setMessage(`Successfully ${isEditing ? 'updated' : 'created'} article!`);
+      toast.success(`Successfully ${isEditing ? 'updated' : 'created'} article!`, { id: toastId });
       if (!isEditing) {
         setTitle(''); setContent(''); setAuthor(''); setSeoTitle(''); setMetaDescription('');
       }
-      onFormSubmit();
+      setTimeout(() => onFormSubmit(), 1000);
     } catch (error: any) {
-      setMessage(error.message);
-      setIsError(true);
+      toast.error(error.message, { id: toastId });
     }
   };
 
@@ -102,7 +110,7 @@ export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: 
             <div>
               <label htmlFor="module" className="block text-sm font-medium text-gray-700 mb-1">Module</label>
               <select id="module" value={moduleId} onChange={(e) => setModuleId(e.target.value)} required className={inputClass}>
-                {modules.length === 0 ? <option>Create a module first</option> : modules.map((module) => <option key={module.id} value={module.id}>{module.name}</option>)}
+                {flatModules.length === 0 ? <option>Create a module first</option> : flatModules.map((module) => <option key={module.id} value={module.id}>{module.name}</option>)}
               </select>
             </div>
             <div>
@@ -134,7 +142,6 @@ export default function ArticleForm({ modules, articleIdToEdit, onFormSubmit }: 
           </div>
         </div>
       </form>
-      {message && <p className={`mt-4 text-sm ${isError ? 'text-red-600' : 'text-green-600'}`}>{message}</p>}
     </div>
   );
 }

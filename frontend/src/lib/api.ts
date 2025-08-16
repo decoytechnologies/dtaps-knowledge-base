@@ -35,7 +35,6 @@ export async function getAllArticleSlugs(): Promise<{ slug: string }[]> {
   }
 }
 
-// New function to get all articles for the homepage
 export async function getAllArticles(): Promise<SingleArticle[]> {
     try {
         const res = await fetch(`${API_URL}/api/admin/articles`, { next: { revalidate: 60 } });

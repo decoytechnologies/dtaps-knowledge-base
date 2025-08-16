@@ -12,24 +12,31 @@ datasource db {
 
 model Module {
   id          Int       @id @default(autoincrement())
-  name        String    @unique
+  name        String
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   articles    Article[]
+
+  // --- NEW: Fields for nesting and ordering ---
+  order       Int       @default(0) // For drag-and-drop ordering
+  parentId    Int?      // A module can have a parent
+  parent      Module?   @relation("SubModules", fields: [parentId], references: [id])
+  children    Module[]  @relation("SubModules")
 }
 
 model Article {
-  id          Int      @id @default(autoincrement())
-  title       String
-  slug        String   @unique
-  content     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  published   Boolean  @default(false)
-  module      Module   @relation(fields: [moduleId], references: [id])
-  moduleId    Int
-  author  String?  // Optional author name
-  seoTitle  String?  // Optional SEO Title
-  metaDescription String?  // Optional Meta Description
+  id              Int      @id @default(autoincrement())
+  title           String
+  slug            String   @unique
+  content         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  published       Boolean  @default(false)
+  module          Module   @relation(fields: [moduleId], references: [id])
+  moduleId        Int
+
+  author          String?
+  seoTitle        String?
+  metaDescription String?
 }
