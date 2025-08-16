@@ -17,6 +17,9 @@
         "name": "next"
       }
     ],
+    // --- THIS IS THE FIX ---
+    // "baseUrl" tells the compiler where to start looking for paths.
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
