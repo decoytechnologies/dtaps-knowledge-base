@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { getModules, getAllArticles } from "@/lib/api";
+import { getModules } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { getAllArticles } from "@/lib/api";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +30,8 @@ export default async function RootLayout({
             <Sidebar modules={modules} />
             <div className="flex-1 flex flex-col">
               <Topbar articles={articles} modules={modules} />
-              <main className="flex-1 overflow-y-auto p-8">
+              {/* FIX: Removed padding to allow content to fill the space */}
+              <main className="flex-1 overflow-y-auto">
                 {children}
               </main>
             </div>

@@ -23,7 +23,14 @@ export default function AiSummary({ content }: { content: string }) {
     try {
       const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
       const payload = { contents: chatHistory };
-      const apiKey = "";
+      
+      // --- THIS IS THE FIX ---
+      // Read the API key from the environment variables
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("Gemini API key is not configured.");
+      }
+      
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
       
       const response = await fetch(apiUrl, {
@@ -32,7 +39,7 @@ export default function AiSummary({ content }: { content: string }) {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('Failed to get a response from the AI.');
+      if (!response.ok) throw new Error('Failed to get a response from the AI. Check your API key and permissions.');
       const result = await response.json();
       
       if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
@@ -41,7 +48,9 @@ export default function AiSummary({ content }: { content: string }) {
           .replace(/\*/g, '<br>• ');
         setSummary(text);
       } else {
-        throw new Error('The AI returned an unexpected response format.');
+        // This will catch errors returned by the API, like billing issues.
+        const apiError = result.error?.message || 'The AI returned an unexpected response format.';
+        throw new Error(apiError);
       }
     } catch (err: any) {
       setError(err.message || 'An unknown error occurred.');

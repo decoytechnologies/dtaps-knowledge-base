@@ -4,7 +4,15 @@ import type { Metadata } from 'next';
 import { User, Clock, Share2 } from 'lucide-react';
 import AiSummary from "@/components/AiSummary";
 
-export const dynamic = 'force-dynamic'; // Ensures page is rendered dynamically
+export const dynamic = 'force-dynamic';
+
+export async function generateStaticParams() {
+  const articles = await getAllArticleSlugs();
+  if (!articles) return [];
+  return articles.map((article) => ({
+    slug: article.slug,
+  }));
+}
 
 type Props = { params: { slug: string } };
 
@@ -17,14 +25,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ArticlePage({ params }: { params: { slug: string } }) {
+export default async function ArticlePage({ params }: { params: { slug:string } }) {
   const article = await getArticleBySlug(params.slug);
   if (!article) return notFound();
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-8">
+    // FIX: Removed max-width and adjusted grid for better scaling
+    <div className="w-full p-8 lg:p-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        {/* The article content now takes up 9 of 12 columns (~75%) */}
+        <div className="lg:col-span-9">
           <article className="bg-card p-8 sm:p-12 rounded-2xl border border-border">
             <header className="mb-10">
               <p className="text-base font-semibold text-primary">{article.module.name}</p>
@@ -34,13 +45,15 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             </header>
             <AiSummary content={article.content} />
             <div
-              className="prose prose-lg dark:prose-invert max-w-none mt-8 prose-img:rounded-xl prose-img:shadow-lg prose-a:text-primary"
+              className="prose prose-lg dark:prose-invert max-w-none mt-8 prose-img:rounded-xl prose-img:shadow-lg prose-a:text-primary prose-img:mx-auto prose-iframe:mx-auto"
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
           </article>
         </div>
-        <aside className="hidden lg:block lg:col-span-4">
-          <div className="sticky top-24 space-y-8">
+
+        {/* The article info sidebar now takes up 3 of 12 columns (~25%) */}
+        <aside className="hidden lg:block lg:col-span-3">
+          <div className="sticky top-8 space-y-8">
             <div className="bg-card p-6 rounded-2xl border border-border">
               <h3 className="font-semibold text-card-foreground mb-4">Article Info</h3>
               <dl className="space-y-4 text-sm text-muted-foreground">
